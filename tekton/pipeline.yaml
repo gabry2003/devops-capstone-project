@@ -40,15 +40,15 @@ spec:
 
     - name: lint
       workspaces:
-        - name: source  # Must match defined YAML workspace name of flake8
+        - name: source
           workspace: pipeline-workspace
       taskRef:
         name: flake8
       params:
       - name: image
-        value: python:3.9-slim
+        value: "python:3.9-slim"
       - name: args
-        value: ["--count", "--max-complexity=10", "--max-line-length=127", "--statistics"]
+        value: ["--count","--max-complexity=10","--max-line-length=127","--statistics"]
       runAfter:
         - clone
 
@@ -57,12 +57,12 @@ spec:
         - name: source
           workspace: pipeline-workspace
       taskRef:
-        name: tests
+        name: nose
       params:
-      - name: args
-        value: -v --with-spec --spec-color
       - name: database_uri
-        value: sqlite:///test.db
+        value: "sqlite:///test.db"
+      - name: args
+        value: "-v --with-spec --spec-color"
       runAfter:
         - clone
 
@@ -72,28 +72,22 @@ spec:
           workspace: pipeline-workspace
       taskRef:
         name: buildah
-        # According to Tekton Doc: ClusterTasks are deprecated and ClusterResolver should be used instead.
-        # However, as required in the project, ClusterTask is still used.
         kind: ClusterTask
       params:
       - name: IMAGE
-        value: $(params.build-image)
+        value: "$(params.build-image)"
       runAfter:
-        - lint
         - tests
+        - lint
 
     - name: deploy
       workspaces:
-        - name: manifest-dir  # Must match defined YAML workspace name of openshift-client
+        - name: manifest-dir
           workspace: pipeline-workspace
       taskRef:
         name: openshift-client
-        # According to Tekton Doc: ClusterTasks are deprecated and 
-        # ClusterResolver should be used instead.
-        # However, as required in the project, ClusterTask is still used.
         kind: ClusterTask
       params:
-      # Script provided by IBM
       - name: SCRIPT
         value: |
           echo "Updating manifest..."
